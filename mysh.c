@@ -91,6 +91,7 @@ char * retrieve(ll *list){
 int builtinCommands(char *c)
 {
 
+//	printf("IN BUILD IN CHECK");
     int isBuiltIn = 0;
 
    if( (strcmp(c, "exit") == 0) || (strcmp(c, "pwd") == 0) || (strcmp(c, "cd")) || (strcmp(c, "wait"))){
@@ -101,7 +102,7 @@ int builtinCommands(char *c)
 }    
 
 
-void callBuiltIns(char *c)
+void callBuiltIns(char *c, char *arr[])
 {
 //    printf("THIS IS C %s\n", c);
     if(strcmp(c, "exit")  == 0)
@@ -114,7 +115,7 @@ void callBuiltIns(char *c)
     }    
     else if(strcmp(c, "cd") == 0)
     {
-        callCd();
+        callCd(arr);
     }    
     else if(strcmp(c, "wait") == 0)
     {
@@ -146,17 +147,32 @@ int callPwd()
 }   
 
 
-int callCd()
+int callCd(char *arr[])
 {
- const char* home = getenv("HOME");
- if(chdir(home) == 0){
-     printf("Directory is now %s\n", home);
-     return EXIT_SUCCESS;
+ if((arr != NULL) && (arr[0] == '\0')){
+//	printf("ARRAY IS EMPTY\n");
+ 	const char* home = getenv("HOME");
+ 	if(chdir(home) == 0){
+ 	    printf("Directory is now %s\n", home);
+ 	    return EXIT_SUCCESS;
 
+ 	}
+ 	else{
+ 	    printf("File directory %s not found.\n", home); 
+ 	    return EXIT_FAILURE;
+ 	}
  }
  else{
-     printf("File directory %s not found.\n", home); 
-     return EXIT_FAILURE;
+//	if(arr[1] == '\0'){	 
+		 callCdPath(arr[0]);
+//	}
+//	else{
+//		printf("Invalid arguments: ");
+//		int i;
+//		for(i = 0; arr[i] != '\0'; i++){
+//			printf("arr[%d] %s, ",i, arr[i]);
+//		}
+//	}
  }
 
 }
@@ -184,27 +200,65 @@ int callWait()
 
 int main(int argc, char *argv[])
 {
+	/*int child;
+	char input[100];
+	char *cmd;
+	char *cmdArr[100];
+	char *token;
+	char *savedcmd;
+	int count = 0; 
+	char *delim = " \t\r\n\f\v";*/
+
     while(1){
-        int child;
-/*        char * cmd = malloc(sizeof(char)+1);
+	int child;
+	char input[100];
+	char *cmd;
+	char *cmdArr[100];
+	char *token;
+	char *savedcmd;
+	int count = 0; 
+	char *delim = " \t\r\n\f\v";
+/*        int child;
+        char * cmd = malloc(sizeof(char)+1);
         char * savedcmd = malloc(sizeof(char)+1);
         char * delim = malloc(sizeof(char)+1);
         char * prev = malloc(sizeof(char)+1);
-        char * token = malloc(sizeof(char)+1);*/
+        char * token = malloc(sizeof(char)+1);
 
-		char cmd[100];
+		char input[100];
+		char *cmd;
 		char *cmdArr[100];
+		char *token;
+		char *savedcmd;
+		int count = 0; 
 
-//        delim = " \t\r\n\f\v";
+        char *delim = " \t\r\n\f\v";*/
     //    prev = NULL;
 
         printf("mysh> ");
-        fgets(cmd,sizeof(cmd), stdin);
-		printf("YOU TYPED: %s\n", cmd);
+        fgets(input,sizeof(input), stdin);
+//		printf("YOU TYPED: %s\n", input);
         /*strcpy(savedcmd, cmd);
         token = strtok(cmd, delim);*/
-      //  token = strtok_r(cmd, delim, &savedcmd);
-        
+        token  = strtok_r(input, delim,&savedcmd);
+		cmd = token;
+//		printf("THIS IS CMD: %s\n", token);
+		while(token != NULL){
+			token = strtok_r(NULL, delim, &savedcmd);	
+			cmdArr[count] = token;
+			count++;
+//			printf("THIS IS CMDARG: %s\n", token);
+		}
+		
+		int i;
+//		for(i = 0; cmdArr[i] != '\0'; i++){
+//				printf("ELEMENT %d is %s\n", i, cmdArr[i]);
+//		}
+
+		if(builtinCommands(cmd)){
+			callBuiltIns(cmd,cmdArr);
+		}
+
  
         
         
