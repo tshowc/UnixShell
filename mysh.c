@@ -186,20 +186,24 @@ int main(int argc, char *argv[])
 {
     while(1){
         int child;
-        char * cmd = malloc(sizeof(char)+1);
+/*        char * cmd = malloc(sizeof(char)+1);
         char * savedcmd = malloc(sizeof(char)+1);
         char * delim = malloc(sizeof(char)+1);
         char * prev = malloc(sizeof(char)+1);
-        char * token = malloc(sizeof(char)+1);
+        char * token = malloc(sizeof(char)+1);*/
 
-        delim = " \t\r\n\f\v";
+		char cmd[100];
+		char *cmdArr[100];
+
+//        delim = " \t\r\n\f\v";
     //    prev = NULL;
 
         printf("mysh> ");
-        gets(cmd);
+        fgets(cmd,sizeof(cmd), stdin);
+		printf("YOU TYPED: %s\n", cmd);
         /*strcpy(savedcmd, cmd);
         token = strtok(cmd, delim);*/
-        token = strtok_r(cmd, delim, &savedcmd);
+      //  token = strtok_r(cmd, delim, &savedcmd);
         
  
         
