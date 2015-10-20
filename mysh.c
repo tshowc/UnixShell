@@ -94,8 +94,12 @@ int builtinCommands(char *c)
 //	printf("IN BUILD IN CHECK");
     int isBuiltIn = 0;
 
-   if( (strcmp(c, "exit") == 0) || (strcmp(c, "pwd") == 0) || (strcmp(c, "cd")) || (strcmp(c, "wait"))){
-     isBuiltIn = 1;
+   if( ((strcmp(c, "exit") == 0) || (strcmp(c, "pwd") == 0)) || ((strcmp(c, "cd") == 0) || (strcmp(c, "wait") == 0))){
+//    printf("%s and exit compared to %d\n", c, strcmp(c,"exit")); 
+//    printf("%s and pwd compared to %d\n", c, strcmp(c,"pwd")); 
+//    printf("%s and cd compared to %d\n", c, strcmp(c,"cd")); 
+//    printf("%s and wait compared to %d\n", c, strcmp(c,"wait")); 
+	isBuiltIn = 1;
    }
 
     return isBuiltIn;  
@@ -179,15 +183,38 @@ int callCd(char *arr[])
 
 int callCdPath(char *path)
 {
-    if(chdir(path) == 0){
-        printf("Directory is now ");
-        callPwd();
-        return EXIT_SUCCESS;
-    }
-    else{
-        printf("File directory %s not found.\n", path); 
-        return EXIT_FAILURE; 
-    }   
+	char *cash = "$";	
+	if(strstr(path, cash) == NULL){    
+		
+		if(chdir(path) == 0){
+    	    printf("Directory is now ");
+    	    callPwd();
+    	    return EXIT_SUCCESS;
+    	}
+    	else{
+    	    printf("File directory %s not found.\n", path); 
+    	    return EXIT_FAILURE; 
+    	}
+	}
+	else{
+		char *env;	
+		char *delim = "$";
+		env = strtok(path, delim);
+		int i;
+		for(i=0; env[i] != NULL; i++){
+			env[i] = toupper(env[i]);
+		}
+	//	printf("THIS IS ENV: %s\n", env);
+		if(chdir(getenv(env)) == 0){
+			printf("Directory is now ");
+			callPwd();
+			return EXIT_SUCCESS;
+		}
+		else{
+			printf("Environment path %s not found.\n", path);
+		}
+	}
+		
 }    
 
 
@@ -211,12 +238,15 @@ int main(int argc, char *argv[])
 
     while(1){
 	int child;
+	int status;
 	char input[100];
 	char *cmd;
 	char *cmdArr[100];
+	char *execArr[100];
 	char *token;
 	char *savedcmd;
 	int count = 0; 
+	int execCount = 1;
 	char *delim = " \t\r\n\f\v";
 /*        int child;
         char * cmd = malloc(sizeof(char)+1);
@@ -242,22 +272,50 @@ int main(int argc, char *argv[])
         token = strtok(cmd, delim);*/
         token  = strtok_r(input, delim,&savedcmd);
 		cmd = token;
+		execArr[0] = token;
 //		printf("THIS IS CMD: %s\n", token);
 		while(token != NULL){
 			token = strtok_r(NULL, delim, &savedcmd);	
 			cmdArr[count] = token;
+			execArr[execCount] = token;
+			execCount++;
 			count++;
 //			printf("THIS IS CMDARG: %s\n", token);
 		}
 		
-		int i;
+//		int i;
 //		for(i = 0; cmdArr[i] != '\0'; i++){
 //				printf("ELEMENT %d is %s\n", i, cmdArr[i]);
 //		}
 
-		if(builtinCommands(cmd)){
+	
+
+		if(builtinCommands(cmd)== 1){
+			printf("builtinCommands: %d\n", builtinCommands(cmd));
 			callBuiltIns(cmd,cmdArr);
 		}
+		else {
+		//	printf("ABOUT TO FORK.\n");
+			child = fork();
+			if(child == 0){
+					//child process
+				if(execvp(cmd, execArr) < 0){
+						printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
+						exit(1);
+				}
+			}
+			else if(child < 0){
+				printf("CHILD PROCESS FAILED.\n");
+				exit(1);
+			}
+			else{
+				while(wait(&status) != child);
+			}
+
+		}	
+
+
+
 
  
         
