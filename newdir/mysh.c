@@ -4,90 +4,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-
-/*typedef struct ll_node{
-    struct ll_node *next;
-    char *token;
-}ll_node;
-
-typedef struct ll{
-    struct ll_node *head;
-    int count;
-}ll;   
-
-
-//DOUBLY LINKED LIST FUNCTIONS: add(), retrieve()
-
-
-ll_node* ll_node_init(char *t){
-    ll_node *node = malloc(sizeof(ll_node));
-    node->next = NULL;
-    node->token = t;
-    return node;
-};
-
-ll* ll_init(){
-    ll *list = malloc(sizeof(ll));
-    list->count = 0;
-    return list;
-};*/
-
-/*int ll_node_init(ll_node **node, char *t){
-    *node = malloc(sizeof(ll_node));
-    if(node != NULL){
-        node->next = NULL;
-        node->token = t;
-        return 1; //SUCCESS
-    }
-    else{
-        return 0; //FAILURE
-    }   
-};
-
-int ll_init(ll **list){
-    *list = malloc(sizeof(ll));
-    if(list != NULL){
-        list->head = NULL;
-        list->count = 0;
-        return 1;
-    }
-    else{
-        return 0;
-    }    
-};*/
-
-//Adds command token to list
-/*void add(char *t, ll *list){
-    ll_node *node = ll_node_init(t);
-    ll_node *temp;
-    if(list->count == 0){
-        list->head = node;
-        list->count++;
-    }   
-    else{
-        temp = list->head;
-        for(int i=0; i <= list->count; i++){
-           temp = temp->next;
-        }
-        temp->next = node;
-        list->count++;  
-    } 
-};    
-
-//Retrieves command tokens from beginning of list and deletes node
-char * retrieve(ll *list){
-    ll_node *temp;
-    char *argv = list->head->token;
-    temp = list->head;
-    list->head = list->head->next;
-    free(temp);
-    return argv;
-
-};*/    
-
-
-
-//Test if a command is built in command or not
 int builtinCommands(char *c)
 {
 
@@ -197,18 +113,11 @@ int main(int argc, char *argv[])
 
         printf("mysh> ");
         gets(cmd);
-        /*strcpy(savedcmd, cmd);
-        token = strtok(cmd, delim);*/
-        token = strtok_r(cmd, delim, &savedcmd);
-        
- 
+        strcpy(savedcmd, cmd);
+        token = strtok(cmd, delim);
         
         
-
-
-
-
-/*        while(token != NULL){
+        while(token != NULL){
 
             fprintf(stderr, "THIS IS THE PREV TOKEN: %s\n", prev);
             printf("This is the current: %s\n", token);
@@ -229,7 +138,7 @@ int main(int argc, char *argv[])
             //Get next token
             token = strtok(NULL, delim);
             
-        }*/
+        }
 
     }
 
