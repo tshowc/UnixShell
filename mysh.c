@@ -128,7 +128,7 @@ void callBuiltIns(char *c, char *arr[])
     }
     else
     {
-        printf("ERROR THIS IS NOT A BUILTIN COMMAND.\n");
+//        printf("ERROR THIS IS NOT A BUILTIN COMMAND.\n");
     }    
 
 }    
@@ -154,6 +154,7 @@ int callPwd()
 
 int callCd(char *arr[])
 {
+ char error_message[30] = "An error has occurred\n";	
  if((arr != NULL) && (arr[0] == '\0')){
 //	printf("ARRAY IS EMPTY\n");
  	const char* home = getenv("HOME");
@@ -163,7 +164,8 @@ int callCd(char *arr[])
 
  	}
  	else{
- 	    printf("File directory %s not found.\n", home); 
+		write(STDERR_FILENO, error_message, strlen(error_message));
+// 	    printf("File directory %s not found.\n", home); 
  	    return EXIT_FAILURE;
  	}
  }
@@ -184,6 +186,7 @@ int callCd(char *arr[])
 
 int callCdPath(char *path)
 {
+	char error_message[30] = "An error has occurred\n";
 	char *cash = "$";	
 	if(strstr(path, cash) == NULL){    
 		
@@ -193,7 +196,8 @@ int callCdPath(char *path)
     	    return EXIT_SUCCESS;
     	}
     	else{
-    	    printf("File directory %s not found.\n", path); 
+			write(STDERR_FILENO, error_message, strlen(error_message));
+//    	    printf("File directory %s not found.\n", path); 
     	    return EXIT_FAILURE; 
     	}
 	}
@@ -212,7 +216,8 @@ int callCdPath(char *path)
 			return EXIT_SUCCESS;
 		}
 		else{
-			printf("Environment path %s not found.\n", path);
+			write(STDERR_FILENO, error_message, strlen(error_message));
+	//		printf("Environment path %s not found.\n", path);
 		}
 	}
 		
@@ -228,6 +233,7 @@ int callWait()
 
 int main(int argc, char *argv[])
 {
+	char error_message[30] = "An error has occurred\n";
 	/*int child;
 	char input[100];
 	char *cmd;
@@ -236,20 +242,25 @@ int main(int argc, char *argv[])
 	char *savedcmd;
 	int count = 0; 
 	char *delim = " \t\r\n\f\v";*/
-	printf("ARGC: %d\n", argc);
+/*	printf("ARGC: %d\n", argc);
 	int i = 0;
 	for(i = 0; argv[i] != '\0'; i++){
 			printf("ARGV %d is %s\n", i, argv[i]);
-	}
+	}*/
 	char *batchfile;
 	FILE *bf;
-	if(argc > 1){
+	if(argc == 2){
 		batchfile = argv[1];
-		bf = fopen(batchfile, "a+");
+		bf = fopen(batchfile, "r");
 		if(bf == NULL){
-				fprintf(stderr, "CANNOT OPEN FILE '%s'. EXITING.\n", batchfile);
+				write(STDERR_FILENO, error_message, strlen(error_message));
+			//	fprintf(stderr, "CANNOT OPEN FILE '%s'. EXITING.\n", batchfile);
 				exit(1);
 		}
+	}
+	else if(argc > 2){
+		write(STDERR_FILENO, error_message, strlen(error_message));
+		exit(1);
 	}
     while(1){
 			
@@ -280,9 +291,10 @@ int main(int argc, char *argv[])
 
         char *delim = " \t\r\n\f\v";*/
     //    prev = NULL;
-		if(argc > 1){
+		if(argc == 2){
 			fgets(input, sizeof(input), (FILE*)bf);
-			printf("%s", input);
+//			printf("%s", input);
+			write(STDOUT_FILENO, input, strlen(input));
 		}
 		else{
         	printf("mysh> ");
@@ -300,7 +312,7 @@ int main(int argc, char *argv[])
 				continue;
 		}
 		else if(strstr(token, ".py") != 0){
-			printf("PYTHON FILE DETECTED\n");
+//			printf("PYTHON FILE DETECTED\n");
 			cmd = "python";
 			execArr[0] = "python";
 			execArr[1] = token;
@@ -312,7 +324,7 @@ int main(int argc, char *argv[])
 			execArr[execCount] = token;
 			execCount++;
 			count++;
-			printf("THIS IS CMDARG: %s\n", token);
+//			printf("THIS IS CMDARG: %s\n", token);
 		}
 		
 //		int i;
@@ -321,7 +333,6 @@ int main(int argc, char *argv[])
 //		}
 
 	
-
 		if(builtinCommands(cmd)== 1){
 		//	printf("builtinCommands: %d\n", builtinCommands(cmd));
 			callBuiltIns(cmd,cmdArr);
@@ -332,7 +343,8 @@ int main(int argc, char *argv[])
 			if(child == 0){
 					//child process
 				if(execvp(cmd, execArr) < 0){
-						printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
+						write(STDERR_FILENO, error_message, strlen(error_message));
+						//printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
 						exit(1);
 				}
 			}
