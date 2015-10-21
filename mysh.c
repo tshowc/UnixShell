@@ -230,7 +230,19 @@ int callWait()
 
 }    
 
+char * str_replace(char *orig, char replace, char with){
+	int i;
+	for(i=0; orig[i]!='\0'; i++){
+		if(orig[i] == replace){
+				orig[i] = with;
+		}
+	}
 
+	printf("THIS IS NEW ORIG: %s .\n", orig);
+	
+	return orig;
+
+}
 int main(int argc, char *argv[])
 {
 	char error_message[30] = "An error has occurred\n";
@@ -332,7 +344,9 @@ int main(int argc, char *argv[])
 //				printf("ELEMENT %d is %s\n", i, cmdArr[i]);
 //		}
 
-	
+
+
+
 		if(builtinCommands(cmd)== 1){
 		//	printf("builtinCommands: %d\n", builtinCommands(cmd));
 			callBuiltIns(cmd,cmdArr);
@@ -358,38 +372,6 @@ int main(int argc, char *argv[])
 
 		}	
 
-
-
-
- 
-        
-        
-
-
-
-
-/*        while(token != NULL){
-
-            fprintf(stderr, "THIS IS THE PREV TOKEN: %s\n", prev);
-            printf("This is the current: %s\n", token);
-
-            if(builtinCommands(token)){
-               if(strcmp(prev, "cd") == 0){
-                  callCdPath(token);
-               }
-               else{
-
-                   callBuiltIns(token);
-               }    
-            }    
-
-            strcpy(prev, token);
-            
-                
-            //Get next token
-            token = strtok(NULL, delim);
-            
-        }*/
 
     }
 
