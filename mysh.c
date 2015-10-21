@@ -147,7 +147,7 @@ int callPwd()
 
     cwd = getcwd( buff, PATH_MAX + 1);
     if(cwd != NULL) {
-        printf("%s\n", cwd );
+        fprintf(stdout, "%s\n", cwd );
 //		write(STDERR_FILENO, cwd, strlen(cwd));
     }
     return EXIT_SUCCESS;    
@@ -161,7 +161,7 @@ int callCd(char *arr[])
 //	printf("ARRAY IS EMPTY\n");
  	const char* home = getenv("HOME");
  	if(chdir(home) == 0){
- 	    printf("Directory is now %s\n", home);
+ 	    fprintf(stdout, "Directory is now %s\n", home);
  	    return EXIT_SUCCESS;
 
  	}
@@ -193,7 +193,7 @@ int callCdPath(char *path)
 	if(strstr(path, cash) == NULL){    
 		
 		if(chdir(path) == 0){
-    	    printf("Directory is now ");
+    	    fprintf(stdout, "Directory is now ");
     	    callPwd();
     	    return EXIT_SUCCESS;
     	}
@@ -213,7 +213,7 @@ int callCdPath(char *path)
 		}
 	//	printf("THIS IS ENV: %s\n", env);
 		if(chdir(getenv(env)) == 0){
-			printf("Directory is now ");
+			fprintf(stdout, "Directory is now ");
 			callPwd();
 			return EXIT_SUCCESS;
 		}
