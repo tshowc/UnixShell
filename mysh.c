@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <limits.h>
 
+//SINGLY LINKED LIST STRUCTURES
 
 /*typedef struct ll_node{
     struct ll_node *next;
@@ -16,7 +17,7 @@ typedef struct ll{
 }ll;   
 
 
-//DOUBLY LINKED LIST FUNCTIONS: add(), retrieve()
+//SINGLY LINKED LIST FUNCTIONS
 
 
 ll_node* ll_node_init(char *t){
@@ -235,19 +236,34 @@ int main(int argc, char *argv[])
 	char *savedcmd;
 	int count = 0; 
 	char *delim = " \t\r\n\f\v";*/
-
+	printf("ARGC: %d\n", argc);
+	int i = 0;
+	for(i = 0; argv[i] != '\0'; i++){
+			printf("ARGV %d is %s\n", i, argv[i]);
+	}
+	char *batchfile;
+	FILE *bf;
+	if(argc > 1){
+		batchfile = argv[1];
+		bf = fopen(batchfile, "a+");
+		if(bf == NULL){
+				fprintf(stderr, "CANNOT OPEN FILE '%s'. EXITING.\n", batchfile);
+				exit(1);
+		}
+	}
     while(1){
-	int child;
-	int status;
-	char input[100];
-	char *cmd;
-	char *cmdArr[100];
-	char *execArr[100];
-	char *token;
-	char *savedcmd;
-	int count = 0; 
-	int execCount = 1;
-	char *delim = " \t\r\n\f\v";
+			
+		int child;
+		int status;
+		char input[100];
+		char *cmd;
+		char *cmdArr[100];
+		char *execArr[100];
+		char *token;
+		char *savedcmd;
+		int count = 0; 
+		int execCount = 1;
+		char *delim = " \t\r\n\f\v";
 /*        int child;
         char * cmd = malloc(sizeof(char)+1);
         char * savedcmd = malloc(sizeof(char)+1);
@@ -264,9 +280,15 @@ int main(int argc, char *argv[])
 
         char *delim = " \t\r\n\f\v";*/
     //    prev = NULL;
-
-        printf("mysh> ");
-        fgets(input,sizeof(input), stdin);
+		if(argc > 1){
+			fgets(input, sizeof(input), (FILE*)bf);
+			printf("%s", input);
+		}
+		else{
+        	printf("mysh> ");
+        	fgets(input,sizeof(input), stdin);
+//			printf("This is input: %s", input);
+		}
 //		printf("YOU TYPED: %s\n", input);
         /*strcpy(savedcmd, cmd);
         token = strtok(cmd, delim);*/
@@ -274,13 +296,23 @@ int main(int argc, char *argv[])
 		cmd = token;
 		execArr[0] = token;
 //		printf("THIS IS CMD: %s\n", token);
+		if(token == '\0'){
+				continue;
+		}
+		else if(strstr(token, ".py") != 0){
+			printf("PYTHON FILE DETECTED\n");
+			cmd = "python";
+			execArr[0] = "python";
+			execArr[1] = token;
+			execCount++;
+		}
 		while(token != NULL){
 			token = strtok_r(NULL, delim, &savedcmd);	
 			cmdArr[count] = token;
 			execArr[execCount] = token;
 			execCount++;
 			count++;
-//			printf("THIS IS CMDARG: %s\n", token);
+			printf("THIS IS CMDARG: %s\n", token);
 		}
 		
 //		int i;
@@ -291,7 +323,7 @@ int main(int argc, char *argv[])
 	
 
 		if(builtinCommands(cmd)== 1){
-			printf("builtinCommands: %d\n", builtinCommands(cmd));
+		//	printf("builtinCommands: %d\n", builtinCommands(cmd));
 			callBuiltIns(cmd,cmdArr);
 		}
 		else {
