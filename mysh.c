@@ -235,12 +235,27 @@ int callWait()
 	return pid;
 }
 
-//BACKGROUND DAEMON FUNCTIONS
-void erase_ampersand(char *arr){
+//BACKGROUND FUNCTIONS
+int erase_ampersand(char *arr){
 	int i;
-	for(i=0; arr[i]!='&'; i++){
+	int ampCount = 0;
+	int firstAmp;
+	for(i=0; arr[i]!='\0'; i++){
+		if(arr[i] == '&'){
+			ampCount++;
+		}
+		if(ampCount > 1){
+				return 0;
+		}
+		else if(ampCount == 1){
+			firstAmp = i;
+		}
 	}
-	arr[i] = '\0';
+
+
+	arr[firstAmp] = '\0';
+	
+	return 1;
 
 //	printf("NEW INPUT: %s\n", arr);
 }
@@ -262,17 +277,18 @@ void str_replace(char *orig, char replace, char with){
 char * get_redirfile(char *cmdArr[]){
 	char *rdFile;
 	int i;
-	for(i=0; cmdArr[i]!='\0' && i <= 1; i++){
+	for(i=0; cmdArr[i]!='\0'; i++){
 	//		printf("LOOP %d\n", i);
 	}
 
 	--i;
 	rdFile = cmdArr[i];
-	while(cmdArr[i]!='\0'){
+	cmdArr[i] = '\0';
+/*	while(cmdArr[i]!='\0'){
 		cmdArr[i] = cmdArr[i+1];
 		i++;
-	};
-	//printf("LAST VALUE AT cmdArr[%d] is %s\n", i, rdFile);
+	};*/
+//	printf("LAST VALUE AT cmdArr[%d] is %s\n", i, rdFile);
 
 
 	return rdFile;
@@ -354,7 +370,7 @@ int main(int argc, char *argv[])
 		int count = 0; 
 		int execCount = 1;
 		int redirFlag = 0;
-		int daemonFlag = 0;
+		int bgFlag = 0;
 		char *delim = " \t\r\n\f\v";
 /*        int child;
         char * cmd = malloc(sizeof(char)+1);
@@ -378,9 +394,10 @@ int main(int argc, char *argv[])
 			write(STDOUT_FILENO, input, strlen(input));
 		}
 		else{
-        	printf("mysh> ");
+        	fprintf(stderr, "mysh> ");
         	fgets(input,sizeof(input), stdin);
 //			printf("This is input: %s", input);
+			
 		}
 	
 		
@@ -399,9 +416,16 @@ int main(int argc, char *argv[])
 				continue;
 			}
 		}
+
+
+//		AMPERSAND DETECTED
 		if(strstr(input, "&") != 0){
-			daemonFlag = 1;
-			erase_ampersand(&input);
+			bgFlag = 1;
+			int checkAmp = erase_ampersand(&input);
+			if (checkAmp != 1){
+				write(STDOUT_FILENO, error_message, strlen(error_message));
+				continue;
+			}
 //			printf("THIS IS INPUTAFTER: %s\n", input);
 		}
 //		printf("YOU TYPED: %s\n", input);
@@ -474,27 +498,29 @@ int main(int argc, char *argv[])
 			child = fork();
 			if(child == 0){
 					//child process
-				int grandchild = fork();
-				if(grandchild ==0){
-						if(redirFlag == 1){
+/*				int grandchild = fork();
+				if(grandchild ==0){*/
+					if(redirFlag == 1){
 							dup2(newFileDesc, 1);
-					}
+						}
 					if(execvp(cmd, execArr) < 0){
 							write(STDERR_FILENO, error_message, strlen(error_message));
 							//printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
 							exit(1);
 					}
-				}
-				while(wait(&status) != grandchild);
+			/*	}
+				while(wait(&status) != grandchild);*/
 			}
 			else if(child < 0){
-				printf("CHILD PROCESS FAILED.\n");
+				write(STDERR_FILENO, error_message, strlen(error_message));
+	//			printf("CHILD PROCESS FAILED.\n");
 				exit(1);
 			}
 			else{
-				if(daemonFlag != 1){
+				if(bgFlag != 1){
 					while(wait(&status) != child);
 				}
+		
 			}
 
 		}	
