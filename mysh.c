@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fcntl.h>
 
 //SINGLY LINKED LIST STRUCTURES
 
@@ -147,6 +148,7 @@ int callPwd()
     cwd = getcwd( buff, PATH_MAX + 1);
     if(cwd != NULL) {
         printf("%s\n", cwd );
+//		write(STDERR_FILENO, cwd, strlen(cwd));
     }
     return EXIT_SUCCESS;    
 }   
@@ -227,10 +229,25 @@ int callCdPath(char *path)
 
 int callWait()
 {
+	int status;
+	pid_t pid;
+	pid = waitpid(-1, &status, 0);
+	return pid;
+}
 
-}    
+//BACKGROUND DAEMON FUNCTIONS
+void erase_ampersand(char *arr){
+	int i;
+	for(i=0; arr[i]!='&'; i++){
+	}
+	arr[i] = '\0';
 
-char * str_replace(char *orig, char replace, char with){
+//	printf("NEW INPUT: %s\n", arr);
+}
+
+
+//REDIRECTION FUNCTIONS
+void str_replace(char *orig, char replace, char with){
 	int i;
 	for(i=0; orig[i]!='\0'; i++){
 		if(orig[i] == replace){
@@ -238,10 +255,60 @@ char * str_replace(char *orig, char replace, char with){
 		}
 	}
 
-	printf("THIS IS NEW ORIG: %s .\n", orig);
+//	printf("THIS IS NEW ORIG: %s\n", orig);
 	
-	return orig;
+}
 
+char * get_redirfile(char *cmdArr[]){
+	char *rdFile;
+	int i;
+	for(i=0; cmdArr[i]!='\0' && i <= 1; i++){
+	//		printf("LOOP %d\n", i);
+	}
+
+	--i;
+	rdFile = cmdArr[i];
+	while(cmdArr[i]!='\0'){
+		cmdArr[i] = cmdArr[i+1];
+		i++;
+	};
+	//printf("LAST VALUE AT cmdArr[%d] is %s\n", i, rdFile);
+
+
+	return rdFile;
+
+}
+
+int check_redirfile(char *arr){
+	int i;
+	int flag = 1;
+	for(i=0; arr[i] != '\0'; i++){
+		if(arr[i]=='>'){
+//			printf("DETECTED REDIRECT\n");
+//			printf("PRINTING NEXT CHAR %c\n", arr[i+1]);
+//			printf("FLAGGING 0\n");
+			flag = 0;
+//			int j = i;
+			i++;
+			while(arr[i] != '\0'){
+//				printf("IN WHILE\n");
+				if(((arr[i] != ' ') && (arr[i] != '\n') && (arr[i] != '>'))) {
+				//	printf("FLAGGING 1 for %c\n",arr[i]);
+					flag = 1;
+				}
+				if(arr[i] == '>'){
+				//	printf("FLAGGING 0\n");
+					flag = 0;
+					break;
+				}
+//				printf("OUT OF IF\n");
+			i++;
+			}
+		 break;
+		}
+	}
+//	printf("OUT OF LOOP\n");
+	return flag;
 }
 int main(int argc, char *argv[])
 {
@@ -286,6 +353,8 @@ int main(int argc, char *argv[])
 		char *savedcmd;
 		int count = 0; 
 		int execCount = 1;
+		int redirFlag = 0;
+		int daemonFlag = 0;
 		char *delim = " \t\r\n\f\v";
 /*        int child;
         char * cmd = malloc(sizeof(char)+1);
@@ -312,6 +381,28 @@ int main(int argc, char *argv[])
         	printf("mysh> ");
         	fgets(input,sizeof(input), stdin);
 //			printf("This is input: %s", input);
+		}
+	
+		
+//      REDIRECTION TIME
+		if(strstr(input, ">") != 0){
+//			printf("REDIRECTION DETECTED\n");
+			int redirCheck = check_redirfile(input);
+			if(redirCheck == 1){
+				str_replace(&input, '>', ' ');
+//				printf("THIS IS THE NEW STR: %s\n", input);
+				redirFlag = 1;
+//				exit(1);
+			}
+			else{
+	            write(STDOUT_FILENO, error_message, strlen(error_message));
+				continue;
+			}
+		}
+		if(strstr(input, "&") != 0){
+			daemonFlag = 1;
+			erase_ampersand(&input);
+//			printf("THIS IS INPUTAFTER: %s\n", input);
 		}
 //		printf("YOU TYPED: %s\n", input);
         /*strcpy(savedcmd, cmd);
@@ -346,28 +437,64 @@ int main(int argc, char *argv[])
 
 
 
+		//REDIRECTION CONTINUED
+		char *redirFile;
+		int stdOut;
+		int newFileDesc;
+		if(redirFlag == 1){
+			stdOut = dup(1);
+//			printf("REDIR FLAG SET\n");
+			redirFile = get_redirfile(execArr);
+//			printf("THIS IS THE REDIR FILE: %s\n", redirFile);
+			if((newFileDesc = open(redirFile, O_CREAT|O_TRUNC|O_WRONLY, 0644)) < 0){
+				perror(redirFile);
+				exit(1);
+			}
+//			exit(1);
+		}
 
+		
+
+		//MAIN PROGRAM COMMAND EXECUTION
 		if(builtinCommands(cmd)== 1){
 		//	printf("builtinCommands: %d\n", builtinCommands(cmd));
-			callBuiltIns(cmd,cmdArr);
+			if(redirFlag == 1){
+					dup2(newFileDesc, 1);
+					callBuiltIns(cmd,cmdArr);
+					close(newFileDesc);
+					dup2(stdOut,1);
+			}
+			else{
+				callBuiltIns(cmd,cmdArr);
+			}
+
 		}
 		else {
 		//	printf("ABOUT TO FORK.\n");
 			child = fork();
 			if(child == 0){
 					//child process
-				if(execvp(cmd, execArr) < 0){
-						write(STDERR_FILENO, error_message, strlen(error_message));
-						//printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
-						exit(1);
+				int grandchild = fork();
+				if(grandchild ==0){
+						if(redirFlag == 1){
+							dup2(newFileDesc, 1);
+					}
+					if(execvp(cmd, execArr) < 0){
+							write(STDERR_FILENO, error_message, strlen(error_message));
+							//printf("EXECUTION OF '%s' HAS FAILED OR IS AN INVALID COMMAND.\n", cmd);
+							exit(1);
+					}
 				}
+				while(wait(&status) != grandchild);
 			}
 			else if(child < 0){
 				printf("CHILD PROCESS FAILED.\n");
 				exit(1);
 			}
 			else{
-				while(wait(&status) != child);
+				if(daemonFlag != 1){
+					while(wait(&status) != child);
+				}
 			}
 
 		}	
